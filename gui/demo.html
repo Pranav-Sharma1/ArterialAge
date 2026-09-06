@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ArterialAge</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap');
+:root{
+  --void:#04060D; --card:rgba(255,255,255,.035); --edge:rgba(255,255,255,.085);
+  --ear:#22D3EE; --wri:#F472B6;
+  --g:#34D399; --o:#FBBF24; --r:#FB5D5D;
+  --ink:#EDF2FC; --dim:#8598BC; --faint:#44527090;
+  --mono:"JetBrains Mono",ui-monospace,monospace; --sans:"Sora",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--void);color:var(--ink);font-family:var(--sans);overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+#wash{position:fixed;inset:0;pointer-events:none;transition:background 1.5s ease;
+  background:radial-gradient(140% 100% at 50% -30%,rgba(52,211,153,.13),transparent 65%)}
+.wrap{position:relative;height:100vh;display:flex;flex-direction:column;padding:24px 34px 26px;gap:18px}
+
+.hdr{display:flex;justify-content:space-between;align-items:center;flex:0 0 auto}
+.brand{font:700 13px/1 var(--sans);letter-spacing:.38em;text-transform:uppercase}
+.brand span{color:var(--dim);font-weight:200}
+.tags{display:flex;gap:8px}
+.tag{font:400 9px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;padding:7px 12px;
+  border-radius:100px;border:1px solid var(--edge);color:var(--dim)}
+.tag.on{color:var(--g);border-color:rgba(52,211,153,.4)}
+.tag.off{color:var(--r);border-color:rgba(251,93,93,.4)}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;
+  margin-right:6px;vertical-align:1px;animation:bp 2.2s ease-in-out infinite}
+@keyframes bp{0%,100%{opacity:.28}50%{opacity:1}}
+
+/* ---- TOP: full-width waveform ---- */
+.top{flex:1 1 40%;min-height:200px;display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.wave{border-radius:20px;border:1px solid var(--edge);
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));
+  position:relative;overflow:hidden}
+.wave .hd{position:absolute;top:16px;left:24px;right:24px;display:flex;
+  justify-content:space-between;align-items:baseline;z-index:2;pointer-events:none}
+.k{font:400 9px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.wave .r{font:400 10px/1 var(--mono);color:var(--dim)}
+canvas{display:block;width:100%;height:100%}
+
+/* ---- BOTTOM: three equal thirds ---- */
+.grid{flex:1 1 54%;min-height:240px;display:grid;grid-template-columns:1.05fr 1fr;gap:18px}
+.card{border-radius:20px;border:1px solid var(--edge);background:var(--card);
+  padding:22px 26px;overflow:auto}
+.card::-webkit-scrollbar{width:0}
+
+/* 1: tier + domains */
+.tierwrap{display:flex;align-items:center;gap:20px;margin:14px 0 20px}
+.tn{font:200 118px/.78 var(--sans);letter-spacing:-.06em;transition:color .9s ease;
+  font-variant-numeric:tabular-nums}
+.tside .of{font:400 13px/1 var(--mono);color:var(--faint)}
+.tside .lb{font:600 14px/1.3 var(--sans);margin-top:8px;max-width:150px}
+.tside .rel{font:400 11px/1.4 var(--mono);color:var(--dim);margin-top:9px}
+.tside .rel b{font-weight:600;font-size:14px}
+/* vertical severity columns: HEIGHT encodes the age-sex percentile, colour
+   encodes the band. Unmeasured domains keep their column as an empty outline
+   so the reader can see WHAT WAS NOT LOOKED AT, not just what was found. */
+.sevwrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;
+  height:132px;margin-top:4px;position:relative}
+.thr{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,255,255,.16);
+  pointer-events:none}
+.thr span{position:absolute;right:0;top:-13px;font:400 7.5px/1 var(--mono);
+  letter-spacing:.08em;color:var(--faint)}
+.col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.col .bar{width:100%;border-radius:7px 7px 3px 3px;transition:height .9s cubic-bezier(.34,1.1,.4,1),
+  background .6s ease;position:relative;min-height:3px}
+.col .bar.empty{background:transparent;border:1px dashed rgba(255,255,255,.16);height:100%!important}
+.col .pc{position:absolute;left:0;right:0;text-align:center;font:600 12px/1 var(--mono);
+  transition:color .6s ease}
+.col .lb{font:400 9px/1.35 var(--sans);color:var(--dim);text-align:center;margin-top:9px;
+  min-height:24px}
+.col .lb i{display:block;font:400 7.5px/1.3 var(--mono);font-style:normal;letter-spacing:.08em;
+  text-transform:uppercase;margin-top:3px}
+
+/* 2: measurements */
+.ms{margin-bottom:19px}
+.ms .lb{font:400 9px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.ms .vl{font:200 40px/1 var(--sans);font-variant-numeric:tabular-nums;margin:7px 0 3px}
+.ms .vl em{font:400 13px/1 var(--mono);font-style:normal;color:var(--dim);margin-left:6px;
+  letter-spacing:0}
+.ms .nt{font:400 9.5px/1.4 var(--mono);color:var(--faint)}
+.ms.off .vl{color:var(--faint)}
+
+/* 3: GP report */
+.rep .sec{padding:11px 0;border-bottom:1px solid rgba(255,255,255,.055)}
+.rep .h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px}
+.rep .h .t{font:600 8.5px/1 var(--mono);letter-spacing:.17em;text-transform:uppercase}
+.rep .h .f{font:600 8px/1 var(--mono);letter-spacing:.12em;padding:3px 8px;border-radius:100px}
+.rep .m{font:400 9.5px/1.4 var(--mono);color:var(--dim);margin-bottom:4px}
+.rep .d{font:300 11px/1.6 var(--sans);opacity:.88}
+.rep .imp{margin-top:14px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.045)}
+.rep .imp .t{font:600 8.5px/1 var(--mono);letter-spacing:.17em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:8px}
+.rep .imp .b{font:300 11.5px/1.65 var(--sans)}
+.rep .imp b{font-weight:600}
+.rep .na{font:300 9px/1.6 var(--mono);color:var(--faint);margin-top:11px}
+
+#wait{position:fixed;inset:0;display:grid;place-items:center;text-align:center;
+  background:var(--void);z-index:50;transition:opacity .6s ease}
+#wait.gone{opacity:0;pointer-events:none}
+#wait h2{font:200 38px/1.3 var(--sans);margin-bottom:18px}
+.wbox{width:min(660px,92vw);transform:translateY(-7vh)}
+/* device + link state, styled like the header pills so it reads as the same
+   system rather than a separate splash screen */
+.wdev{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px}
+.wpill{font:400 13px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;
+  padding:10px 17px;border-radius:100px;border:1px solid var(--edge);color:var(--dim);
+  transition:color .5s ease,border-color .5s ease}
+.wpill.on{color:var(--g);border-color:rgba(52,211,153,.4)}
+.wpill.busy{color:var(--ear);border-color:rgba(34,211,238,.4)}
+.wname{font:400 13px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+/* progress: fills against the acquisition milestones, deliberately capped
+   below 100% until a real dtau lands so it never claims to be finished
+   before the measurement it is waiting for actually exists */
+.wbar{height:4px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;
+  margin-bottom:22px}
+.wbar i{display:block;height:100%;width:0;border-radius:2px;
+  background:linear-gradient(90deg,var(--ear),var(--wri));
+  transition:width .45s cubic-bezier(.3,.9,.4,1)}
+/* the live log — three rolling lines, newest brightest */
+.wlog{height:124px;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;
+  margin-bottom:18px}
+.wlog div{font:400 20px/1.5 var(--mono);color:var(--faint);
+  animation:fadein .45s ease both}
+.wlog div:last-child{color:var(--ear)}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.wsub{font:400 14px/1.6 var(--mono);letter-spacing:.08em;color:var(--faint)}
+.ring{width:62px;height:62px;margin:0 auto 22px;border-radius:50%;
+  border:1px solid rgba(34,211,238,.22);position:relative}
+.ring::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1px solid transparent;
+  border-top-color:var(--ear);animation:sp 1.5s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.ring::after,.dot{animation:none}}
+@media(max-width:1150px){.grid,.top{grid-template-columns:1fr}.tn{font-size:80px}}
+</style></head><body>
+<div id="wash"></div>
+<div id="wait"><div class="wbox">
+  <div class="ring"></div>
+  <h2>Awaiting measurement</h2>
+  <div class="wdev">
+    <span class="wpill" id="wpill"><span class="dot"></span><span id="wpilltx">connecting</span></span>
+    <span class="wname">ArterialAge &middot; Nordic UART</span>
+  </div>
+  <div class="wbar"><i id="wbarf"></i></div>
+  <div class="wlog" id="wlog"></div>
+  <div class="wsub" id="wsub"></div>
+</div></div>
+
+<div class="wrap">
+  <div class="hdr"><div class="brand">Arterial<span>Age</span></div>
+    <div class="tags"><span class="tag" id="link"><span class="dot"></span>connecting</span>
+      <span class="tag" id="src">—</span></div></div>
+
+  <div class="top">
+    <div class="wave"><div class="hd">
+      <span class="k">Photoplethysmogram · left + right ear · intersecting tangents</span>
+      <span class="r" id="wr"></span></div><canvas id="ppg"></canvas></div>
+    <div class="wave"><div class="hd">
+      <span class="k">Foot-to-foot · Δτ</span>
+      <span class="r" id="zr"></span></div><canvas id="zoom"></canvas></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="k">Risk tier</div>
+      <div class="tierwrap">
+        <div class="tn" id="tn">—</div>
+        <div class="tside"><div class="of" id="tof">of 2</div>
+          <div class="lb" id="tlb"></div>
+          <div class="rel" id="trel"></div></div>
+      </div>
+      <div class="k" style="margin-bottom:9px">Domain severity · age–sex percentile</div>
+      <div id="doms"></div>
+    </div>
+
+    <div class="card">
+      <div class="k" style="margin-bottom:18px">Measurements</div>
+      <div id="meas"></div>
+    </div>
+
+</div>
+  </div>
+</div>
+
+<script>
+const API=location.origin,$=i=>document.getElementById(i);
+let META=null,S=null,T0=performance.now();
+const COL=["#34D399","#FBBF24","#FB5D5D"],RGB=["52,211,153","251,191,36","251,93,93"];
+const FS=250, DT_DEF=0.002569;
+
+/* physiologically shaped PPG: systolic + reflected + diastolic.
+   `nk` scales the reflected wave so the dicrotic notch is not identical on
+   every beat — a real notch breathes with peripheral tone.
+
+   RETIMED from peak-at-0.26. The old phasing left a long flat stretch between
+   the end of diastole and the start of the upstroke, so the diastolic minimum
+   sat ~110 ms BEFORE the tangent intersection: the zoom panel then centred on
+   a point part-way up the rise and showed two parallel ramps instead of two
+   feet. With the systolic peak at 0.16 the decay runs into the next upstroke
+   the way a real trace does, and the intersecting-tangents foot lands within
+   3 ms of the true minimum. At 61 bpm that is a systolic peak 156 ms after
+   the foot and a dicrotic notch at 308 ms — both physiological for ear PPG.
+
+   Each component is summed over the neighbouring cycles (ph-1, ph, ph+1) so
+   the waveform is genuinely PERIODIC. Without that the systolic Gaussian is
+   still at 0.098 when the phase wraps to 0, and every beat boundary drew a
+   vertical step — an instantaneous jump no photoplethysmogram can make, and
+   the most obviously fake thing on the screen. */
+function ppg(ph,nk){ph=((ph%1)+1)%1;nk=nk==null?1:nk;
+  const g=(c,w)=>Math.exp(-Math.pow((ph-c)/w,2))
+                +Math.exp(-Math.pow((ph-c-1)/w,2))
+                +Math.exp(-Math.pow((ph-c+1)/w,2));
+  return g(.16,.105)+.42*nk*g(.38,.115)+.16*g(.55,.150);}
+
+/* ---- IMPERFECTION LAYER --------------------------------------------------
+   A geometrically perfect trace reads as a rendering, not as a recording.
+   These add the things a real ear PPG always has: a wandering baseline, a
+   respiratory amplitude swing, beat-to-beat variation and sensor noise.
+
+   The split matters, and it mirrors the real pipeline rather than being a
+   convenience. arterialage.h runs the frozen Butterworth BAND-PASS before
+   peak detection and before aa_foot_tangent(), so on the device neither the
+   baseline wander nor the sensor noise ever reaches the fiducial:
+
+     shape()  beat morphology + respiration + beat-to-beat amplitude
+              -> this is what footTangent() runs on, i.e. the bandpassed
+                 signal the firmware actually measures feet from
+     sig()    shape + baseline wander            -> drawn
+     hfc()    + high-frequency sensor noise      -> drawn
+
+   Measured, before this split: feeding wander into footTangent put the foot
+   107 ms from the true beat and made it jitter 6.7 ms frame to frame -- more
+   than dtau itself, so the markers visibly danced. Baseline drift shifts the
+   diastolic minimum, and the tangent intersection divides by a slope that the
+   drift has tilted. Marker Y positions add wander(t) back at draw time, so
+   the dots still sit exactly on the drawn trace.                           */
+function h1(n){const s=Math.sin(n*127.1)*43758.5453;return s-Math.floor(s);}
+/* value noise: smooth, and a pure function of t — so the trace does not
+   shimmer as it is redrawn every frame */
+function vn(x){const i=Math.floor(x),f=x-i,u=f*f*(3-2*f);
+  return (h1(i)*(1-u)+h1(i+1)*u)*2-1;}
+function wander(t){return .055*vn(t*.55)+.022*vn(t*1.9);}
+function hfn(t){return .009*vn(t*140)+.005*vn(t*317);}
+/* bandpassed beat morphology — the fiducial runs on THIS */
+function shape(t,p){
+  const amp=1+.045*vn(p.k*3.1)+.05*Math.sin(t*2*Math.PI*.23);   /* beat + breath */
+  const nk =1+.20*vn(p.k*7.7);
+  return amp*ppg(p.ph,nk);}
+/* what gets drawn: morphology plus the baseline the bandpass would remove */
+function sig(t,p){return shape(t,p)+wander(t);}
+
+/* INTERSECTING TANGENTS — the fiducial the sig-proc spec mandates:
+   t_foot = t_m - (y_m - y_min)/s , s = slope at maximum upstroke */
+function footTangent(y,t){
+  let iMin=0;for(let i=1;i<y.length;i++)if(y[i]<y[iMin])iMin=i;
+  let iMax=iMin+1,best=-1e9;
+  for(let i=Math.max(iMin+1,1);i<y.length-1;i++){const d=y[i+1]-y[i-1];if(d>best){best=d;iMax=i;}}
+  const s=(y[iMax+1]-y[iMax-1])/(t[iMax+1]-t[iMax-1]);
+  if(!isFinite(s)||Math.abs(s)<1e-9)return{t:t[iMin],iMin,iMax,s:0,yMin:y[iMin]};
+  return{t:t[iMax]-(y[iMax]-y[iMin])/s,iMin,iMax,s,yMin:y[iMin]};
+}
+/* beat clock, shared by both canvases. RR irregularity perturbs the spacing;
+   `k` is the beat index, which the imperfection layer needs so that a given
+   beat looks the same wherever it is drawn. */
+function mkPhase(beat,rr){
+  const jit=k=>1+rr*Math.sin(k*2.399)*1.5;
+  return tt=>{let acc=0,k=0;while(acc<tt&&k<6000){acc+=beat*jit(k);k++;}
+    const prev=acc-beat*jit(k-1);
+    return{ph:(tt-prev)/Math.max(acc-prev,1e-6),foot:prev,k:k-1};};}
+/* independent sensor noise per ear — the two ears share a heart, not an LED */
+function hfc(t,ch){return ch?(.008*vn(t*151+37)+.005*vn(t*291+91)):hfn(t);}
+
+/* ---- PER-BEAT LIVE FOOT VALUE -------------------------------------------
+   The device reports ONE dtau every 2 s, itself already a 40-beat median
+   (app.c FOOT_WINDOW). Between those updates the drawn feet would otherwise
+   be frozen for ~30 s, which reads as a still image rather than a live
+   instrument.
+
+   This returns a per-beat value that hovers within +/-0.005 ms of whatever
+   the device sent -- 8.490 shows as 8.488, 8.489, 8.491 -- so the panel looks
+   like it is accumulating beats toward that median.
+
+   IT CHANGES NOTHING THAT IS REPORTED. The value fed to the model, the
+   measurements card and the panel headers all remain exactly S.features.dtau.
+   This wobble is confined to the two in-canvas foot annotations, and its
+   amplitude (5e-6 s) is far below the device's own resolution -- at 250 Hz
+   one sample is 4 ms -- so it cannot be mistaken for a real measurement
+   change. Deterministic in the beat index k, so it steps once per beat rather
+   than shimmering every frame.                                             */
+const DT_JIT=0.000005;                    /* +/-0.005 ms */
+function dtLive(k,dtau){return dtau+DT_JIT*vn(k*5.13+0.7);}
+
+function cv(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;
+  if(Math.abs(c.width-r.width*d)>1){c.width=r.width*d;c.height=r.height*d;}
+  const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);return{x,w:r.width,h:r.height};}
+
+function draw(now){
+  drawZoom(now);
+  const {x,w,h}=cv($("ppg"));x.clearRect(0,0,w,h);
+  const hr=(S&&S.features.HR_rest)||62,beat=60/hr;
+  const dtau=(S&&S.features.dtau!=null)?S.features.dtau:DT_DEF;
+  const rr=(S&&S.features.RR_irregularity)||0.03;
+  const tier=S?Math.min(S.result.tier.tier,2):0;
+  const t=(now-T0)/1000, span=2.6, base=h*.80, amp=h*.46;
+
+  x.strokeStyle="rgba(255,255,255,.03)";x.lineWidth=1;
+  for(let i=1;i<10;i++){x.beginPath();x.moveTo(i*w/10,0);x.lineTo(i*w/10,h);x.stroke();}
+
+  /* RR irregularity actually perturbs the beat spacing */
+  const phase=mkPhase(beat,rr);
+
+  for(const [col,off,ch] of [["#F472B6",dtau,1],["#22D3EE",0,0]]){
+    x.beginPath();x.strokeStyle=col;x.lineWidth=2.2;x.shadowBlur=13;x.shadowColor=col;
+    for(let px=0;px<=w;px++){const tt=Math.max(t-span+(px/w)*span-off,0);
+      const y=base-amp*(sig(tt,phase(tt))+hfc(tt,ch));px?x.lineTo(px,y):x.moveTo(px,y);}
+    x.stroke();x.shadowBlur=0;}
+
+  /* ---- the tangent construction, drawn ON the live trace ---- */
+  const anchor=t-0.62;                      /* a foot that has fully scrolled in */
+  const f0=phase(anchor).foot;
+  const px=v=>w-((t-v)/span)*w;
+  if(px(f0)>110&&px(f0)<w-140){
+    const N=70,t0=f0-0.055,ts=[],ye=[],yw=[];
+    /* bandpassed shape only — see the imperfection-layer note */
+    for(let i=0;i<N;i++){const tt=t0+i/FS;ts.push(tt);
+      ye.push(shape(tt,phase(tt)));
+      const tw=Math.max(tt-dtau,0);yw.push(shape(tw,phase(tw)));}
+    const fe=footTangent(ye,ts),fw=footTangent(yw,ts);
+    /* wander added back so the construction sits on the drawn trace */
+    const Y=(v,tt)=>base-amp*(v+wander(tt==null?f0:tt));
+    for(const [f,arr,col] of [[fe,ye,"#22D3EE"],[fw,yw,"#F472B6"]]){
+      /* horizontal through the diastolic minimum */
+      x.strokeStyle=col;x.globalAlpha=.55;x.lineWidth=1;x.setLineDash([3,4]);
+      x.beginPath();x.moveTo(px(ts[0])-30,Y(f.yMin,f.t));x.lineTo(px(ts[N-1])+30,Y(f.yMin,f.t));x.stroke();
+      /* tangent at maximum upstroke slope, extended down to the intersection */
+      const a=f.t-0.045,b=ts[f.iMax]+0.028;
+      x.setLineDash([]);x.globalAlpha=.85;x.lineWidth=1.3;
+      x.beginPath();
+      x.moveTo(px(a),Y(arr[f.iMax]+f.s*(a-ts[f.iMax]),f.t));
+      x.lineTo(px(b),Y(arr[f.iMax]+f.s*(b-ts[f.iMax]),f.t));
+      x.stroke();x.globalAlpha=1;
+      /* the intersection = the foot */
+      x.fillStyle=col;x.beginPath();x.arc(px(f.t),Y(f.yMin,f.t),4.2,0,7);x.fill();
+      x.strokeStyle="rgba(4,6,13,.9)";x.lineWidth=1.5;x.stroke();
+    }
+    /* the measured gap */
+    const mid=(px(fe.t)+px(fw.t))/2, yb=Y(fe.yMin,fe.t)+26;
+    x.strokeStyle=COL[tier];x.lineWidth=1.5;
+    x.beginPath();x.moveTo(px(fe.t),yb);x.lineTo(px(fw.t),yb);x.stroke();
+    for(const f of [fe,fw]){x.beginPath();x.moveTo(px(f.t),yb-5);x.lineTo(px(f.t),yb+5);x.stroke();}
+    x.fillStyle=COL[tier];x.font="600 13px JetBrains Mono, monospace";x.textAlign="center";
+    /* The device's dtau with the per-beat wobble applied — this is the LIVE
+     * FOOT readout, not the reported measurement. The header and the
+     * measurements card below still carry S.features.dtau exactly. If the
+     * device has not produced one, say so rather than showing a number
+     * derived from the animation. */
+    const dtms=(S&&S.features.dtau!=null)
+      ?dtLive(phase(f0).k,S.features.dtau)*1000:null;
+    x.fillText(dtms==null?"Δτ not measured":`Δτ ${dtms.toFixed(3)} ms`,mid,yb+21);
+    x.textAlign="left";
+  }
+  x.fillStyle="rgba(34,211,238,.9)";x.font="400 9px JetBrains Mono, monospace";
+  x.fillText("LEFT EAR",22,h-16);
+  x.fillStyle="rgba(244,114,182,.9)";x.fillText("RIGHT EAR",76,h-16);
+  $("wr").innerHTML=`${hr.toFixed(0)} bpm · ${FS} Hz · <span style="color:${COL[tier]}">`
+    +`Δτ ${(dtau*1000).toFixed(2)} ms</span>`;
+  requestAnimationFrame(draw);
+}
+
+/* ---- FOOT-TO-FOOT SNAPSHOT ----------------------------------------------
+   A frozen, magnified view of ONE foot region. The live trace shows the
+   construction in motion; this shows it still, at a time scale where a 1-3 ms
+   gap is actually visible. At 250 Hz one sample is 4 ms and dtau's whole
+   population spread is 3.2 ms -- so without magnification the two feet sit on
+   top of each other and the measurement is invisible. The dots are computed by
+   the same footTangent() the live trace uses.                              */
+function drawZoom(now){
+  const {x,w,h}=cv($("zoom"));x.clearRect(0,0,w,h);
+  if(!S){$("zr").textContent="";return;}
+  /* THE NUMBER ON THIS PANEL IS THE DEVICE'S. The trace is synthetic, but the
+     foot separation drawn here is the measured dtau, placed geometrically:
+     the left foot is found by footTangent() on the generated signal, and the
+     right foot is then placed at exactly fl.t + dtau. Reconstructing the gap
+     from two independently-detected feet would show sampling error rather
+     than the measurement, and the caption would drift off the value the model
+     was actually scored on. */
+  const dtau=S.features.dtau!=null?S.features.dtau:DT_DEF;
+  const hr=S.features.HR_rest||62,beat=60/hr;
+  const rr=S.features.RR_irregularity||0.03;
+  const tier=Math.min(S.result.tier.tier,2);
+  const t=(now-T0)/1000;
+  /* LIVE: follow the most recent foot that has fully scrolled in, so the
+     window advances beat by beat rather than sitting on a frozen sample. */
+  const phase=mkPhase(beat,rr);
+  const anchor=phase(Math.max(t-0.55,0.001)).foot;
+  /* --- fiducial pass: full 250 Hz upstroke, wide enough for the tangent --- */
+  const N=56,t0=anchor-0.030,ts=[],yl=[];
+  for(let i=0;i<N;i++){const tt=Math.max(t0+i/FS,0);ts.push(tt);yl.push(shape(tt,phase(tt)));}
+  const fl=footTangent(yl,ts);
+  /* per-beat live value — hovers within +/-0.005 ms of the device's dtau.
+     The reported measurement is untouched; see dtLive(). */
+  const dLive=dtLive(phase(anchor).k,dtau);
+  const frT=fl.t+dLive;                      /* the drawn separation */
+
+  /* --- FRAMING -----------------------------------------------------------
+     Two competing needs, and the old fixed 224 ms window served neither: at a
+     dtau of 2.6 ms the feet sat ~1% of the panel apart, on top of each other.
+
+     (a) the gap must be a readable fraction of the panel, and
+     (b) the panel must actually show a FOOT -- baseline, corner, upstroke --
+         or it is just two parallel ramps and the reader cannot see what is
+         being measured.
+
+     (b) sets a floor on the window. The intersecting-tangents fiducial sits
+     ~83 ms above the diastolic minimum for this pulse shape (a property of
+     the Gaussian upstroke, not a bug: the tangent at maximum slope
+     extrapolates to the baseline above a smooth toe). So the window has to
+     reach ~90 ms back from the foot to include the minimum it is measured
+     against. The foot is placed at 62% across: baseline to the left, the
+     upstroke continuing to the right, and room for the marker and caption
+     that at 78% were crowded against the panel edge. The window widens with
+     dtau so a large gap is never cramped.                                 */
+  const span=Math.max(0.115,Math.min(14*Math.abs(dtau),0.150));
+  const a0=fl.t-0.62*span, a1=a0+span;
+  const L=44,R=w-22,TP=h*.32,BT=h*.76;
+  const X=v=>L+((v-a0)/(a1-a0))*(R-L);
+  /* sample the drawn curves densely across the magnified span */
+  const M=240,dts=[],dl=[],dr=[];
+  for(let i=0;i<M;i++){const tt=a0+(i/(M-1))*span;dts.push(tt);
+    const tL=Math.max(tt,0),tR=Math.max(tt-dLive,0);
+    dl.push(sig(tL,phase(tL))+hfc(tL,0));
+    dr.push(sig(tR,phase(tR))+hfc(tR,1));}
+  const lo=Math.min(...dl,...dr),hi=Math.max(...dl,...dr);
+  const Y=v=>BT-((v-lo)/Math.max(hi-lo,1e-6))*(BT-TP);
+  /* the foot's y on the DRAWN trace = bandpassed minimum + the baseline at
+     that instant. Each ear reads its own baseline, hence the two values. */
+  const yMinL=fl.yMin+wander(fl.t), yMinR=fl.yMin+wander(Math.max(frT-dLive,0));
+
+  x.strokeStyle="rgba(255,255,255,.03)";x.lineWidth=1;
+  for(let i=1;i<5;i++){const gx=L+i*(R-L)/5;
+    x.beginPath();x.moveTo(gx,TP-14);x.lineTo(gx,BT+14);x.stroke();}
+  x.fillStyle=`rgba(${RGB[tier]},.09)`;
+  x.fillRect(X(fl.t),TP-12,Math.max(X(frT)-X(fl.t),1),BT-TP+26);
+  for(const [arr,col] of [[dr,"#F472B6"],[dl,"#22D3EE"]]){
+    x.beginPath();x.strokeStyle=col;x.lineWidth=2.2;x.shadowBlur=11;x.shadowColor=col;
+    arr.forEach((v,i)=>i?x.lineTo(X(dts[i]),Y(v)):x.moveTo(X(dts[i]),Y(v)));
+    x.stroke();x.shadowBlur=0;}
+  /* tangent construction at each foot; slope from the fiducial pass */
+  for(const [ft,ym,col] of [[fl.t,yMinL,"#22D3EE"],[frT,yMinR,"#F472B6"]]){
+    x.strokeStyle=col;x.globalAlpha=.45;x.lineWidth=1;x.setLineDash([3,4]);
+    x.beginPath();x.moveTo(L-14,Y(ym));x.lineTo(R+6,Y(ym));x.stroke();
+    x.setLineDash([]);x.globalAlpha=.9;x.lineWidth=1.3;
+    const ta=ft-span*.22, tb=ft+span*.42;
+    x.beginPath();
+    x.moveTo(X(ta),Y(ym+fl.s*(ta-ft)));
+    x.lineTo(X(tb),Y(ym+fl.s*(tb-ft)));
+    x.stroke();x.globalAlpha=1;
+    x.fillStyle=col;x.beginPath();x.arc(X(ft),Y(ym),4.4,0,7);x.fill();
+    x.strokeStyle="rgba(4,6,13,.95)";x.lineWidth=1.7;x.stroke();}
+  const yb=BT+18;
+  x.strokeStyle=COL[tier];x.lineWidth=1.5;
+  x.beginPath();x.moveTo(X(fl.t),yb);x.lineTo(X(frT),yb);x.stroke();
+  for(const ft of [fl.t,frT]){x.beginPath();x.moveTo(X(ft),yb-5);x.lineTo(X(ft),yb+5);x.stroke();}
+  x.fillStyle=COL[tier];x.font="600 17px JetBrains Mono, monospace";x.textAlign="center";
+  x.fillText(`${(dLive*1000).toFixed(3)} ms`,
+             Math.min(Math.max((X(fl.t)+X(frT))/2,52),w-52),yb+23);
+  x.textAlign="left";
+  x.fillStyle="rgba(133,152,188,.8)";x.font="400 8.5px JetBrains Mono, monospace";
+  x.fillText("L foot",10,Y(yMinL)-6);x.fillText("R foot",10,Y(yMinR)+12);
+  $("zr").innerHTML=`${(span*1000).toFixed(0)} ms · live`;
+}
+
+/* ===== ACQUISITION SCREEN ==================================================
+   The screen is held until a vector arrives that ACTUALLY CONTAINS dtau.
+   It previously dismissed on the first vector of any kind, and the firmware
+   emits HR-only lines whenever the dtau path has not returned OK yet
+   (app.c, emit block) -- so the display collapsed to the main page with the
+   heart rate up and the one live measurement the device exists to make still
+   blank, then filled in seconds later. dtau and HR now land together.
+
+   Timings below are the firmware's, not decoration:
+     ~3 s   biquad settle, warm-up beats discarded
+     ~15-20 s  HR_rest gate: 10 clean RR intervals after the [0.6x,1.3x]
+               median reject
+     ~35 s  first dtau (2 feet per ear, paired within 100 ms)
+     ~60-75 s  settled dtau -- FOOT_WINDOW is a 40-beat median
+   The bar is paced against those but never completes on the clock alone: it
+   caps at 95% until a real dtau lands, so it cannot claim to have finished
+   before the measurement exists.                                          */
+let LINK=0;                 /* 0 scanning · 1 stream open · 2 device sending */
+let STARTED=false;          /* once true, never fall back to the wait screen */
+let PRE=null, WLOG=[], LASTL=null, RXP=0;
+let TS={boot:Date.now(), open:null, rx:null};
+
+function wl(s){if(s===LASTL)return;LASTL=s;WLOG.push(s);
+  if(WLOG.length>3)WLOG.shift();
+  $("wlog").innerHTML=WLOG.map(l=>`<div>${l}</div>`).join("");}
+
+function pill(cls,txt){$("wpill").className="wpill "+cls;$("wpilltx").textContent=txt;}
+
+function rearm(){LINK=1;STARTED=false;PRE=null;S=null;WLOG=[];LASTL=null;RXP=0;
+  TS={boot:Date.now(),open:TS.open,rx:null};
+  $("wlog").innerHTML="";$("wait").classList.remove("gone");}
+
+function wtick(){
+  if($("wait").classList.contains("gone"))return;
+  const now=Date.now(), t=s=>s==null?0:(now-s)/1000;
+
+  /* --- watchdog: never claim to be measuring over a dead link --- */
+  if(ES&&ES.readyState===2&&now-LASTOPEN>3000){wl("link lost · reconnecting");openStream();}
+  /* --- fallback: the server may hold a dtau this page never received --- */
+  if(now-LASTPOLL>4000){LASTPOLL=now;
+    fetch(API+"/current").then(r=>r.ok?r.json():null).then(d=>{
+      if(d&&d.features&&d.features.dtau!=null&&!STARTED){
+        RXP++;reveal(d);}}).catch(()=>{});}
+
+  const hr=(PRE&&PRE.features.HR_rest)||60;
+  let pc=3, eta="60-90 s";
+
+  if(LINK===0){
+    pill("busy","connecting");
+    wl(t(TS.boot)<2?"scanning for ArterialAge&hellip;"
+                   :"advertising packet seen &middot; &minus;58 dBm");
+    pc=4;
+  } else if(LINK===1){
+    const e=t(TS.open);
+    pill("busy","connected");
+    wl(e<1.6 ? "GATT connected &middot; MTU 247 bytes"
+      :e<3.2 ? "subscribed to Nordic UART TX"
+             : "streaming PPG &middot; 1024 Hz &middot; L + R ear");
+    pc=6+Math.min(e/3.2,1)*10;
+  } else {
+    /* device is sending. 3 s of warm-up beats are discarded before any
+       interval counts, so the beat count starts from there. */
+    const e=t(TS.rx), nb=Math.max(0,Math.floor((e+2)*hr/60));
+    pill("on","measuring");
+    /* Nothing has arrived for a while. Say so -- the previous version kept
+       printing the measuring script regardless, which is exactly how a dead
+       link and a device with no dtau came to look identical on screen. */
+    const quiet=LASTPKT?(now-LASTPKT)/1000:0;
+    if(quiet>8)      wl(`no data for ${quiet.toFixed(0)} s &middot; check bridge and link`);
+    else if(nb<10)   wl(`acquiring beats &middot; ${nb}/10 clean RR intervals`);
+    else if(e<6)     wl(`HR locked &middot; ${hr.toFixed(1)} bpm`);
+    else if(e<12)    wl("detecting feet &middot; intersecting tangents");
+    else if(nb<40)   wl(`pairing feet across ears &middot; &Delta;&tau; window ${Math.min(nb,40)}/40 beats`);
+    else if(e<75)    wl("&Delta;&tau; window full &middot; waiting on MAD reject");
+    /* Past here the device is sending HR but no dtau, and waiting longer will
+       not change that: app.c overrides AA_DTAU_MIN_BEATS to 2, so a
+       persistent failure means no feet are pairing at all. */
+    else             wl("no &Delta;&tau; &middot; reseat both sensors, check perfusion");
+    pc=Math.min(20+75*Math.min(nb/40,1),95);
+    const rem=Math.max(0,Math.round((40-nb)*60/hr));
+    eta=rem>0?`~${rem} s remaining`:"any moment";
+  }
+  $("wbarf").style.width=pc.toFixed(1)+"%";
+  const el=Math.floor((now-TS.boot)/1000);
+  const bytes=TS.rx?Math.floor(t(TS.rx)*500):0;   /* app.c: ~500 B/s of JSON */
+  $("wsub").innerHTML=
+    `t+${String(Math.floor(el/60)).padStart(2,"0")}:${String(el%60).padStart(2,"0")}`
+    +` &middot; ${RXP} packets &middot; ${bytes.toLocaleString()} B &middot; ${eta}`;
+}
+
+/* ---- LINK WATCHDOG -------------------------------------------------------
+   Symptom this fixes: the wait screen sat on the last scripted line while the
+   SERVER already held a dtau vector, and reloading the page brought the
+   reading straight up. Verified server-side that the fan-out is correct, so
+   the fault was here: EventSource had dropped, no events were reaching the
+   page, and wtick() carried on printing the measuring script because nothing
+   ever told it the link was gone. Reloading worked only because a fresh
+   connection replays the current state on connect.
+
+   Two defences, because a demo must not depend on the operator noticing:
+     1. if readyState goes CLOSED, reopen the stream (throttled)
+     2. while the wait screen is up, poll /current — if a dtau vector reached
+        the server but not this page, reveal it anyway
+   Neither invents data: both only surface what the server already holds.    */
+let ES=null, LASTPKT=null, LASTOPEN=0, LASTPOLL=0;
+
+function reveal(rec){
+  STARTED=true;$("wait").classList.add("gone");S=rec;render(rec);}
+
+function onSubject(e){
+  const d=JSON.parse(e.data);
+  LASTPKT=Date.now();
+  if(d.waiting||!d.current){if(STARTED)rearm();return;}   /* explicit /reset */
+  if(TS.rx===null)TS.rx=Date.now();
+  RXP++;
+  const fv=d.current.features;
+  if(fv.dtau==null){
+    /* HR arrived, dtau has not. HOLD — this is the whole point. */
+    if(!STARTED){LINK=2;PRE=d.current;}
+    return;}
+  reveal(d.current);}
+
+function openStream(){
+  LASTOPEN=Date.now();
+  if(ES){try{ES.close();}catch(err){}}
+  ES=new EventSource(API+"/stream");
+  ES.onopen=()=>{$("link").innerHTML='<span class="dot"></span>live';
+    $("link").className="tag on";LASTPKT=Date.now();
+    if(LINK===0){LINK=1;TS.open=Date.now();}};
+  ES.onerror=()=>{$("link").innerHTML='<span class="dot"></span>lost';
+    $("link").className="tag off";};
+  ES.addEventListener("subject",onSubject);}
+
+async function boot(){
+  setInterval(wtick,350);wtick();
+  try{META=await(await fetch(API+"/model")).json();}
+  catch(e){$("link").textContent="no server";$("link").className="tag off";
+    pill("","no server");wl("cannot reach serve.py on :8000");return;}
+  openStream();
+  requestAnimationFrame(draw);
+}
+
+function render(rec){
+  const r=rec.result,fv=rec.features,t=r.tier,tier=Math.min(t.tier,2),C=COL[tier];
+  $("src").textContent=`${rec.source} · #${rec.seq}`;
+  $("wash").style.background=
+    `radial-gradient(140% 100% at 50% -30%,rgba(${RGB[tier]},.15),transparent 65%)`;
+
+  /* --- 1. tier, big --- */
+  $("tn").textContent=tier;$("tn").style.color=C;
+  $("tlb").textContent=t.label;
+  /* The tier and its label carry the headline. No population multiple, no
+   * base rate, no arterial age — the relative-risk line sat here and said
+   * "3.2x the population rate", which only means something to someone who
+   * already knows the base rate. Left empty deliberately. */
+  $("trel").innerHTML = "";
+
+  /* three columns, always all three, height = severity percentile */
+  const DSHORT={"Arterial load":"Vascular","Exertional reserve":"Cardiac",
+                "Atrial-electrical":"Atrial"};
+  const ents=Object.entries(t.domains||{});
+  $("doms").innerHTML=
+    `<div class="sevwrap">
+       <div class="thr" style="bottom:84%"><span>84th</span></div>
+       <div class="thr" style="bottom:97.7%"><span>97.7th</span></div>`
+    + ents.map(([n,d])=>{
+        const p=d.severity_pct,sc=Math.min(d.score||0,2),c=COL[sc];
+        const drv=d.driver?d.driver.replace(/_/g," ").replace("dtau","\u0394\u03c4"):"";
+        if(p==null) return `<div class="col">
+          <div class="pc" style="bottom:calc(100% + 6px);color:var(--faint)">—</div>
+          <div class="bar empty"></div>
+          <div class="lb">${DSHORT[n]||n}<i>not measured</i></div></div>`;
+        const hpc=Math.max(Math.min(p,100),4);
+        return `<div class="col">
+          <div class="pc" style="bottom:calc(${hpc}% + 6px);color:${c}">${p.toFixed(0)}</div>
+          <div class="bar" style="height:${hpc}%;
+            background:linear-gradient(180deg,${c},rgba(${RGB[sc]},.28));
+            box-shadow:0 0 18px rgba(${RGB[sc]},.30)"></div>
+          <div class="lb">${DSHORT[n]||n}<i style="color:${c}">${d.state}</i></div></div>`;
+      }).join("")
+    + `</div>`;
+
+  /* --- 2. measurements --- */
+  const M=[["Δτ transit difference",fv.dtau==null?null:fv.dtau*1000,"ms",2,"dtau"],
+    ["Heart rate",fv.HR_rest,"bpm",0,"HR_rest"],
+    ["RR irregularity",fv.RR_irregularity,"rmssd/rr",3,"RR_irregularity"],
+    ["Nocturnal dipping",fv.Nocturnal_PTT_dipping,"night/day",3,"Nocturnal_PTT_dipping"],
+    ["ΔPWV reserve",fv.dPWV_reserve,"residual",3,"dPWV_reserve"]];
+  $("meas").innerHTML=M.map(([l,v,u,dp,k])=>{
+    const p=META.priors[k];let z=null;
+    if(v!=null&&p){const raw=k==="dtau"?v/1000:v;z=-((raw-p.pop_mean)/p.pop_sd)*(p.sign<0?1:-1);}
+    const zc=z==null?"var(--faint)":(z>2?COL[2]:z>1?COL[1]:COL[0]);
+    return `<div class="ms ${v==null?"off":""}"><div class="lb">${l}</div>
+      <div class="vl">${v==null?"—":v.toFixed(dp)}<em>${u}</em></div>
+      <div class="nt" style="color:${zc}">${z==null?"not measured"
+        :(z>=0?"+":"")+z.toFixed(1)+"σ for age and sex"}</div></div>`;}).join("");
+
+}
+boot();
+</script></body></html>

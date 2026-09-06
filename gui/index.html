@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ArterialAge — Monitor</title>
+<style>
+:root{
+  --ground:#E3E7EA; --panel:#FFF; --ink:#141D28; --muted:#66748A; --rule:#C6CED7;
+  --trace:#1F6285; --prior:#9E6B18; --alarm:#8E2F26; --ok:#356B54; --idle:#98A3B2;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:"Inter",-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;
+  line-height:1.45;padding:18px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font:600 15px/1.2 var(--sans);letter-spacing:.15em;text-transform:uppercase}
+.sub{font:400 11px/1.4 var(--mono);color:var(--muted)}
+.hdr{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;
+  border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:14px}
+.pill{font:500 10px/1 var(--mono);letter-spacing:.07em;text-transform:uppercase;
+  border:1px solid var(--muted);color:var(--muted);padding:5px 8px;border-radius:2px}
+.pill.live{border-color:var(--ok);color:var(--ok)}
+.pill.err{border-color:var(--alarm);color:var(--alarm)}
+.pill.warn{border-color:var(--prior);color:var(--prior)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;
+  margin-right:5px;vertical-align:1px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:15px}
+.cap{font:600 10px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:minmax(300px,.95fr) minmax(340px,1.15fr);gap:13px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+svg{display:block;width:100%;height:auto}
+.trace{margin-bottom:13px}
+#wait{text-align:center;padding:66px 20px}
+#wait .big{font:600 17px/1.4 var(--sans);margin-bottom:8px}
+#wait .cmds{display:inline-block;text-align:left;margin-top:18px;font:400 11.5px/1.9 var(--mono);
+  color:var(--muted);background:#F7F9FA;border:1px solid var(--rule);border-radius:3px;padding:14px 18px}
+#wait .cmds b{color:var(--ink);font-weight:500}
+.pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--trace);
+  margin-right:8px;animation:pl 1.6s ease-in-out infinite}
+@keyframes pl{0%,100%{opacity:.25}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none;opacity:.6}}
+.fr{display:grid;grid-template-columns:1fr 76px 62px;gap:8px;align-items:center;
+  padding:5px 0;border-bottom:1px dotted var(--rule);font:400 12px/1.3 var(--sans)}
+.fr small{display:block;font:400 9.5px/1.2 var(--mono);color:var(--muted)}
+.fv{font:500 11.5px/1 var(--mono);text-align:right}
+.zv{font:500 11px/1 var(--mono);text-align:right;padding:3px 4px;border-radius:2px}
+.zv.hot{background:#F6E3E1;color:var(--alarm)} .zv.cool{background:#E5EFEA;color:var(--ok)}
+.zv.off{color:var(--idle)}
+.gl{font:600 9px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--rule);padding:11px 0 5px;margin-bottom:4px;display:flex;
+  justify-content:space-between}
+.gl .tag{color:var(--prior)} .gl .tag.l{color:var(--trace)}
+.tierbox{display:flex;gap:13px;align-items:center;padding-bottom:12px;
+  border-bottom:1px solid var(--rule);margin-bottom:12px}
+.tn{font:600 42px/.85 var(--mono);letter-spacing:-.03em;padding:10px 16px;
+  border:2px solid currentColor;border-radius:3px}
+.t1{font:600 12.5px/1.3 var(--sans)} .t2{font:400 10.5px/1.35 var(--mono);color:var(--muted);margin-top:3px}
+.big{font:600 30px/1 var(--mono);letter-spacing:-.02em}
+.small{font:400 11px/1.45 var(--mono);color:var(--muted)}
+.ci{margin:11px 0 13px}
+.cibar{position:relative;height:22px;background:#EEF1F3;border-radius:2px;overflow:hidden}
+.cir{position:absolute;top:0;bottom:0;background:#C6DAE4}
+.cip{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+.cib{position:absolute;top:0;bottom:0;width:1px;background:var(--alarm);opacity:.8}
+.cil{display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);color:var(--muted);margin-top:4px}
+.bar{display:grid;grid-template-columns:1fr 96px 54px;gap:7px;align-items:center;
+  margin-bottom:5px;font:400 11px/1.3 var(--sans)}
+.bt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+.bg{position:relative;height:13px;background:#F0F2F4;border-radius:1px}
+.bf{position:absolute;top:0;bottom:0;border-radius:1px}
+.bf.learned{background:var(--trace)} .bf.context{background:var(--muted)}
+.bf.prior{background:repeating-linear-gradient(45deg,var(--prior) 0 3px,#E7D8BD 3px 6px)}
+.bz{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--ink);opacity:.3}
+.bv{font:500 11px/1 var(--mono);text-align:right}
+.leg{display:flex;gap:15px;flex-wrap:wrap;font:400 9.5px/1.5 var(--mono);color:var(--muted);
+  margin-top:9px;padding-top:9px;border-top:1px solid var(--rule)}
+.sw{display:inline-block;width:16px;height:9px;vertical-align:-1px;margin-right:4px;border-radius:1px}
+.rk{display:grid;grid-template-columns:26px 1fr 92px;gap:8px;align-items:center;
+  padding:5px 0;border-bottom:1px dotted var(--rule);font:400 11.5px/1.35 var(--sans)}
+.rk .n{font:600 12px/1 var(--mono);color:var(--muted);text-align:right}
+.rk .band{position:relative;height:15px;background:#F0F2F4;border-radius:1px}
+.rk .bd{position:absolute;top:3px;bottom:3px;background:#C6DAE4;border-radius:1px}
+.rk .pt{position:absolute;top:0;bottom:0;width:2px;background:var(--trace)}
+.rk .v{font:500 11px/1 var(--mono);text-align:right}
+.tie{color:var(--prior);font:500 9.5px/1 var(--mono);letter-spacing:.05em}
+.dom{display:grid;grid-template-columns:1fr auto;gap:6px;font:400 11.5px/1.4 var(--sans);
+  padding:6px 0;border-bottom:1px dotted var(--rule)}
+.st{font:500 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase}
+.note{font:400 10px/1.55 var(--mono);color:var(--muted);margin-top:11px;padding-top:9px;
+  border-top:1px solid var(--rule)}
+.warn{color:var(--prior)}
+@media(prefers-reduced-motion:no-preference){
+  .bf,.cir,.cip,.foot,#tn{transition:all .35s cubic-bezier(.4,0,.2,1)}
+}
+</style></head><body><div class="wrap">
+
+<div class="hdr">
+  <div><h1>ArterialAge — Monitor</h1><div class="sub" id="meta">connecting…</div></div>
+  <div><span class="pill" id="link"><span class="dot"></span>no stream</span>
+       <span class="pill" id="src">awaiting device</span>
+       <span class="pill warn">calibrated: false</span></div>
+</div>
+
+<div id="wait" class="card">
+  <div class="big"><span class="pulse"></span>Waiting for a feature vector</div>
+  <div class="small">This display renders whatever the device sends. It has no inputs.</div>
+  <div class="cmds">
+    <b>python push.py --json examples/subject_hfpef.json</b><br>
+    <b>python push.py --replay examples/session.jsonl --interval 2</b><br>
+    <b>python sigproc.py --emit-features | python push.py --stdin --follow</b><br>
+    <span style="opacity:.7">POST /ingest</span>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="card trace">
+    <div class="cap"><span>Ear-to-ear pulse arrival</span><span id="dread"></span></div>
+    <svg viewBox="0 0 700 136" role="img" aria-label="Left and right ear pulse waveforms with the transit-time difference marked">
+      <defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7z" fill="#141D28"/></marker></defs>
+      <line x1="40" y1="120" x2="682" y2="120" stroke="#C6CED7"/>
+      <path id="wL" fill="none" stroke="#1F6285" stroke-width="2"/>
+      <path id="wR" fill="none" stroke="#8E2F26" stroke-width="2" stroke-dasharray="5 3"/>
+      <line id="fL" class="foot" y1="28" y2="114" stroke="#1F6285" stroke-width="1"/>
+      <line id="fR" class="foot" y1="28" y2="114" stroke="#8E2F26" stroke-width="1"/>
+      <line id="gap" y1="21" y2="21" stroke="#141D28" stroke-width="1.2"
+            marker-start="url(#ar)" marker-end="url(#ar)"/>
+      <text id="gapT" y="16" text-anchor="middle" font-family="ui-monospace,monospace"
+            font-size="11" font-weight="600" fill="#141D28"></text>
+      <text x="44" y="36" font-family="ui-monospace,monospace" font-size="9.5" fill="#1F6285">LEFT EAR</text>
+      <text x="44" y="48" font-family="ui-monospace,monospace" font-size="9.5" fill="#8E2F26">RIGHT EAR</text>
+    </svg>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="cap"><span>Feature vector received</span><span id="stamp"></span></div>
+      <div id="feats"></div>
+      <div class="cap" style="margin:16px 0 8px">Stiffness ranking
+        <span style="text-transform:none;letter-spacing:0" id="mdd"></span></div>
+      <div id="cmp"></div>
+      <div class="cap" style="margin:16px 0 8px">Session trend</div>
+      <svg id="trend" viewBox="0 0 480 108" role="img" aria-label="Risk index over the session"></svg>
+      <div class="small" id="trendlbl"></div>
+    </div>
+
+    <div class="card">
+      <div class="cap"><span>Classification</span><span id="floor"></span></div>
+      <div class="tierbox">
+        <div class="tn" id="tn">–</div>
+        <div style="flex:1;min-width:0"><div class="t1" id="tl"></div><div class="t2" id="td"></div></div>
+      </div>
+      <div class="big" id="mult"></div>
+      <div class="small" id="idx"></div>
+      <div class="ci"><div class="cibar"><div class="cir" id="cir"></div>
+        <div class="cib" id="cib"></div><div class="cip" id="cip"></div></div>
+        <div class="cil"><span>0%</span><span id="cin"></span><span id="citop"></span></div></div>
+      <div class="small" id="aage" style="margin-bottom:12px"></div>
+      <div class="cap">Where the risk came from</div>
+      <div id="bars"></div>
+      <div class="leg">
+        <span><span class="sw" style="background:#66748A"></span>context — age·sex·MAP, once</span>
+        <span><span class="sw" style="background:#1F6285"></span>learned from data</span>
+        <span><span class="sw" style="background:repeating-linear-gradient(45deg,#9E6B18 0 3px,#E7D8BD 3px 6px)"></span>prior — assumption</span>
+      </div>
+      <div class="cap" style="margin-top:14px">Domains (HMOD)</div>
+      <div id="doms"></div>
+      <div class="note" id="note"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const API=location.origin, $=id=>document.getElementById(id);
+let META=null, HIST=[], CMP=[];
+
+const GROUPS=[
+ ["Arterial load · device","prior",[
+   ["dtau","\u0394\u03C4 transit difference","ms",1000,2],
+   ["Nocturnal_PTT_dipping","Nocturnal PTT dipping","night/day",1,3],
+   ["dPWV_reserve","\u0394PWV reserve","log residual",1,3]]],
+ ["Exertional reserve","learned",[
+   ["HR_RANGE","HR range p95\u2212p5","bpm",1,0],
+   ["HR_rest","Resting HR","bpm",1,0],
+   ["HRR60","HR recovery 60 s","bpm",1,1],
+   ["HRACS","Chronotropic slope","",1,2]]],
+ ["Capacity","learned",[["ATC95","Activity ceiling","steps",1,0]]],
+ ["Atrial\u2013electrical","learned",[["RR_irregularity","RR irregularity","",1,3]]],
+ ["Context","learned",[["age","Age","yr",1,0],["sex","Sex (0 F / 1 M)","",1,0],
+   ["MAP","Mean arterial pressure","mmHg",1,0]]]];
+
+async function boot(){
+  try{
+    META=await (await fetch(API+"/model")).json();
+    let m=`${META.cohort} \u00B7 ${META.label_kind} \u00B7 base rate ${(100*META.base_prevalence).toFixed(2)}%`;
+    if(META.synthetic_demo_tables)m+=" \u00B7 SYNTHETIC DEMO TABLES";
+    if(META.demo_mode)m+=" \u00B7 DEMO MODE: arterial load only, tier capped at 2";
+    $("meta").textContent=m;
+  }catch(e){ $("meta").textContent="cannot reach the model \u2014 run: python serve.py"; return; }
+  connect();
+}
+
+function connect(){
+  const es=new EventSource(API+"/stream");
+  es.onopen=()=>{ $("link").innerHTML='<span class="dot"></span>stream live'; $("link").className="pill live"; };
+  es.onerror=()=>{ $("link").innerHTML='<span class="dot"></span>stream lost'; $("link").className="pill err"; };
+  es.addEventListener("subject",e=>{
+    const d=JSON.parse(e.data);
+    if(d.waiting||!d.current){ $("wait").style.display=""; $("app").style.display="none";
+      $("src").textContent="awaiting device"; $("src").className="pill"; HIST=[]; return; }
+    $("wait").style.display="none"; $("app").style.display="";
+    HIST=d.history||[]; CMP=d.compare||[]; render(d.current);
+  });
+}
+
+function render(rec){
+  const r=rec.result, fv=rec.features, t=r.tier, pct=x=>(100*x).toFixed(2)+"%";
+  $("src").textContent=`${rec.source} \u00B7 #${rec.seq}`; $("src").className="pill live";
+  $("stamp").textContent=rec.at.replace("T"," ").replace("+00:00","Z");
+
+  let h="";
+  for(const [title,kind,fs] of GROUPS){
+    h+=`<div class="gl"><span>${title}</span><span class="tag ${kind==="learned"?"l":""}">${kind}</span></div>`;
+    for(const [k,lbl,u,sc,dp] of fs){
+      const v=fv[k], miss=v===null||v===undefined, p=META.priors[k];
+      let z=null; if(!miss&&p) z=-((v-p.pop_mean)/p.pop_sd)*(p.sign<0?1:-1);
+      const zc=z===null?"off":(z>1.645?"hot":z<-.5?"cool":"");
+      h+=`<div class="fr"><span>${lbl}<small>${u||"&nbsp;"}</small></span>
+        <span class="fv" style="${miss?"color:var(--idle)":""}">${miss?"\u2014":(v*(sc||1)).toFixed(dp)}</span>
+        <span class="zv ${zc}">${z===null?"":(z>=0?"+":"")+z.toFixed(1)+"\u03C3"}</span></div>`;
+    }
+  }
+  $("feats").innerHTML=h;
+
+  const tc=t.demo_mode?["#356B54","#9E6B18","#8E2F26"][t.tier]
+                     :["#356B54","#9E6B18","#9E6B18","#8E2F26"][t.tier];
+  $("tn").textContent=t.demo_mode?`${t.tier}/2`:t.tier; $("tn").style.color=tc;
+  $("tl").textContent=t.label;
+  if(t.demo_mode){
+    $("td").textContent=(t.worst_severity_pct!=null
+      ? `${t.driver} at the ${t.worst_severity_pct.toFixed(0)}th age\u2013sex percentile`
+      : "arterial load not assessed")
+      + " \u00B7 capped at 2: Tier 3 is ventricular\u2013arterial coupling and needs the exertional domain";
+  } else $("td").textContent=t.va_coupling_rule
+    ? "arterial load + exertional reserve both abnormal \u2192 Tier 3 by mechanism rule"
+    : `${t.n_assessed}/3 domains assessed \u00B7 abnormal = above the 95th age\u2013sex percentile`;
+  $("floor").innerHTML=t.tier_is_floor?'<span class="warn">TIER IS A FLOOR</span>':"";
+  $("mult").textContent=r.multiple_of_population.toFixed(2)+"\u00D7 population rate";
+  $("idx").textContent=`index ${pct(r.risk_index)} (95% ${pct(r.lo)} \u2013 ${pct(r.hi)}) against a `
+    +`${pct(r.base_prevalence)} base rate \u2014 the MULTIPLE is the supported claim`;
+  const TOP=Math.max(.10,Math.min(1,r.hi*1.15)), X=x=>Math.min(100,100*x/TOP);
+  $("cir").style.left=X(r.lo)+"%"; $("cir").style.width=Math.max(.6,X(r.hi)-X(r.lo))+"%";
+  $("cip").style.left=X(r.risk_index)+"%"; $("cib").style.left=X(r.base_prevalence)+"%";
+  $("citop").textContent=(100*TOP).toFixed(0)+"%";
+  $("cin").textContent=r.lo>r.base_prevalence?"interval clears the population rate"
+                                             :"interval spans the population rate";
+  const a=r.arterial_age;
+  $("aage").innerHTML=a?`arterial age <b>${a.arterial_age.toFixed(0)}</b> vs chronological `
+    +`${a.chronological_age.toFixed(0)} \u2014 gap <b style="color:${a.gap_years>0?"var(--alarm)":"var(--ok)"}">`
+    +`${a.gap_years>0?"+":""}${a.gap_years.toFixed(0)} years</b>`:"";
+
+  const ts=r.provenance.filter(x=>x.logit!==0||x.kind==="context"||x.observed===false);
+  const mx=Math.max(...ts.map(x=>Math.abs(x.logit)),.5);
+  $("bars").innerHTML=ts.map(x=>{
+    if(x.observed===false&&x.logit===0)
+      return `<div class="bar"><span class="bt" title="${x.note||""}">${x.term}</span>
+        <span class="bg"><span class="bz" style="left:50%"></span></span>
+        <span class="bv" style="color:var(--idle)">n/m</span></div>`;
+    const w=50*Math.abs(x.logit)/mx, l=x.logit>=0?50:50-w;
+    return `<div class="bar"><span class="bt" title="${(x.source||x.note||"").replace(/"/g,"&quot;")}">${x.term}</span>
+      <span class="bg"><span class="bz" style="left:50%"></span>
+      <span class="bf ${x.kind}" style="left:${l}%;width:${w}%"></span></span>
+      <span class="bv">${x.logit>=0?"+":""}${x.logit.toFixed(2)}</span></div>`;}).join("");
+
+  $("doms").innerHTML=Object.entries(t.domains).map(([n,d])=>{
+    const prov=(d.features||[]).some(f=>f.provisional_norms);
+    return `<div class="dom"><span>${n}${prov?' <span class="warn" style="font-size:9px">provisional norms</span>':""}</span>
+      <span class="st" style="color:${d.state==="not assessed"?"var(--idle)":
+        d.state==="abnormal"?"var(--alarm)":"var(--ok)"}">${d.state}</span></div>`;}).join("");
+
+  const caps=Object.entries(r.prior_caps||{}).filter(([,v])=>v).map(([k])=>k);
+  $("note").innerHTML=`Risk <b>INDEX</b>, calibrated: <b>false</b>. Ranking, the multiple and the tier
+    are supported; the absolute percentage is not, until a cohort co-observes every feature with the
+    outcome.<br>Priors carry <b>${(100*r.prior_share).toFixed(0)}%</b> of this prediction's magnitude.`
+    +(META.provisional_norms.length?`<br><span class="warn">Provisional norms</span> for
+      ${META.provisional_norms.join(", ")} \u2014 the prior's population distribution, not device data.`:"")
+    +(caps.length?`<br><span class="warn">Prior ceilings hit:</span> ${caps.join(", ")}.`:"");
+
+  trace(fv); trend(); compare(r);
+}
+
+function trace(fv){
+  const off=fv.dtau===null||fv.dtau===undefined, ms=off?18.35:fv.dtau*1000;
+  const x0=205, px=Math.max(6,Math.min(310,ms*7.6)), x1=x0+px;
+  const pulse=sx=>{let d=`M40,114 L${sx-34},114`;
+    for(let i=0;i<=88;i++){const t=i/88,x=sx-34+t*152;
+      const y=114-84*Math.exp(-Math.pow((t-.30)/.15,2))-22*Math.exp(-Math.pow((t-.60)/.19,2));
+      d+=` L${x.toFixed(1)},${y.toFixed(1)}`;} return d+" L682,114";};
+  $("wL").setAttribute("d",pulse(x0)); $("wR").setAttribute("d",pulse(x1));
+  $("fL").setAttribute("x1",x0);$("fL").setAttribute("x2",x0);
+  $("fR").setAttribute("x1",x1);$("fR").setAttribute("x2",x1);
+  $("gap").setAttribute("x1",x0);$("gap").setAttribute("x2",x1);
+  $("gapT").setAttribute("x",(x0+x1)/2);
+  $("gapT").textContent=off?"not measured":`\u0394\u03C4 ${ms.toFixed(1)} ms`;
+  const p=META.priors.dtau, z=off?null:-((fv.dtau-p.pop_mean)/p.pop_sd);
+  $("dread").innerHTML=off?'<span style="color:var(--idle)">not measured</span>'
+   :`<span style="font-family:var(--mono);font-size:11px;color:${z>1.645?"var(--alarm)":"var(--muted)"}">
+     centre ${(p.pop_mean*1000).toFixed(1)} ms \u00B7 subject ${z>=0?"+":""}${z.toFixed(1)}\u03C3 ${z>0?"(stiffer)":"(softer)"}</span>`;
+}
+
+function compare(r){
+  const g=r.rank_guard;
+  $("mdd").innerHTML = g
+    ? `<span style="color:var(--muted);font:400 10px/1 var(--mono)">`
+      +`SE ${g.se_ms.toFixed(2)} ms (${(100*g.anatomical_share).toFixed(0)}% anatomical) `
+      +`\u00B7 need &gt;${g.min_separation_ms.toFixed(2)} ms to order two people</span>` : "";
+  if(!CMP.length){ $("cmp").innerHTML=
+    '<div class="small">no dtau readings yet</div>'; return; }
+  const all=CMP.flatMap(x=>x.members);
+  const lo=Math.min(...all.map(m=>m.dtau_ms-1.96*m.se_ms));
+  const hi=Math.max(...all.map(m=>m.dtau_ms+1.96*m.se_ms));
+  const X=v=>100*(v-lo)/Math.max(hi-lo,1e-6);
+  $("cmp").innerHTML=CMP.map(grp=>grp.members.map((m,i)=>{
+    const b0=X(m.dtau_ms-1.96*m.se_ms), b1=X(m.dtau_ms+1.96*m.se_ms);
+    return `<div class="rk">
+      <span class="n">${i===0?grp.rank:""}</span>
+      <span class="band" title="#${m.seq}: ${m.dtau_ms.toFixed(2)} ms \u00B1 ${(1.96*m.se_ms).toFixed(2)}">
+        <span class="bd" style="left:${b0}%;width:${Math.max(b1-b0,1)}%"></span>
+        <span class="pt" style="left:${X(m.dtau_ms)}%"></span></span>
+      <span class="v">${m.dtau_ms.toFixed(2)} ms${grp.tied&&i===0
+        ?' <span class="tie">TIED</span>':''}</span></div>`;}).join("")).join("");
+  $("cmp").innerHTML+='<div class="small" style="margin-top:7px">'
+    +'stiffest at top \u00B7 bars are 95% bands including the unmeasured '
+    +'per-person path length \u00B7 <span class="warn">overlapping bars cannot be ordered</span></div>';
+}
+
+function trend(){
+  const s=$("trend");
+  if(HIST.length<2){ s.innerHTML=""; $("trendlbl").textContent=
+    "one timepoint \u2014 the device's value is the trajectory, not the snapshot"; return; }
+  const W=480,H=108,P=8, xs=i=>P+i*(W-2*P)/(HIST.length-1);
+  const top=Math.max(...HIST.map(h=>h.hi))*1.1, ys=v=>H-P-(v/top)*(H-2*P);
+  const area=HIST.map((h,i)=>`${xs(i)},${ys(h.hi)}`).join(" ")+" "+
+    HIST.slice().reverse().map((h,i)=>`${xs(HIST.length-1-i)},${ys(h.lo)}`).join(" ");
+  const line=HIST.map((h,i)=>`${i?"L":"M"}${xs(i)},${ys(h.risk)}`).join(" ");
+  const base=ys(META.base_prevalence);
+  s.innerHTML=`<polygon points="${area}" fill="#C6DAE4" opacity=".55"/>
+    <line x1="${P}" y1="${base}" x2="${W-P}" y2="${base}" stroke="#8E2F26" stroke-width="1"
+      stroke-dasharray="3 3" opacity=".7"/>
+    <text x="${W-P}" y="${Math.max(9,base-4)}" text-anchor="end" font-family="ui-monospace,monospace"
+      font-size="8.5" fill="#8E2F26">population rate</text>
+    <path d="${line}" fill="none" stroke="#1F6285" stroke-width="2"/>
+    ${HIST.map((h,i)=>`<circle cx="${xs(i)}" cy="${ys(h.risk)}" r="${i===HIST.length-1?3.4:1.8}"
+      fill="${["#356B54","#9E6B18","#9E6B18","#8E2F26"][h.tier]}"/>`).join("")}`;
+  const f=HIST[0], l=HIST[HIST.length-1];
+  $("trendlbl").innerHTML=`${HIST.length} timepoints \u00B7 risk ${(100*f.risk).toFixed(2)}% \u2192 `
+    +`<b>${(100*l.risk).toFixed(2)}%</b> \u00B7 tier ${f.tier} \u2192 <b>${l.tier}</b>`
+    +(f.gap!=null&&l.gap!=null?` \u00B7 arterial-age gap ${f.gap>0?"+":""}${f.gap.toFixed(0)} \u2192 `
+      +`<b>${l.gap>0?"+":""}${l.gap.toFixed(0)}</b> years`:"");
+}
+boot();
+</script></body></html>

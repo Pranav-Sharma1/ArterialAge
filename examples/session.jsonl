@@ -1,0 +1,12 @@
+{"age": 67.0, "sex": 1, "MAP": 99.1, "dtau": 0.016478, "Nocturnal_PTT_dipping": 1.0697, "dPWV_reserve": 0.0223, "ATC95": 10255, "HR_RANGE": 44.7, "HR_rest": 55.6, "RR_irregularity": 0.0472}
+{"age": 67.1, "sex": 1, "MAP": 95.6, "dtau": 0.017993, "Nocturnal_PTT_dipping": 1.0625, "dPWV_reserve": 0.0186, "ATC95": 9891, "HR_RANGE": 42.9, "HR_rest": 57.9, "RR_irregularity": 0.0653}
+{"age": 67.2, "sex": 1, "MAP": 98.5, "dtau": 0.015732, "Nocturnal_PTT_dipping": 1.0591, "dPWV_reserve": 0.0147, "ATC95": 9571, "HR_RANGE": 44.3, "HR_rest": 61.0, "RR_irregularity": 0.0839}
+{"age": 67.2, "sex": 1, "MAP": 98.5, "dtau": 0.015207, "Nocturnal_PTT_dipping": 1.0566, "dPWV_reserve": 0.0101, "ATC95": 9067, "HR_RANGE": 42.4, "HR_rest": 60.5, "RR_irregularity": 0.1065}
+{"age": 67.3, "sex": 1, "MAP": 101.0, "dtau": 0.014387, "Nocturnal_PTT_dipping": 1.0429, "dPWV_reserve": 0.0086, "ATC95": 7822, "HR_RANGE": 41.1, "HR_rest": 61.6, "RR_irregularity": 0.11}
+{"age": 67.4, "sex": 1, "MAP": 101.0, "dtau": 0.013598, "Nocturnal_PTT_dipping": 1.0344, "dPWV_reserve": -0.001, "ATC95": 8317, "HR_RANGE": 38.6, "HR_rest": 65.6, "RR_irregularity": 0.159}
+{"age": 67.5, "sex": 1, "MAP": 101.7, "dtau": 0.012926, "Nocturnal_PTT_dipping": 1.029, "dPWV_reserve": -0.005, "ATC95": 8077, "HR_RANGE": 38.1, "HR_rest": 64.8, "RR_irregularity": 0.1606}
+{"age": 67.6, "sex": 1, "MAP": 102.7, "dtau": 0.010648, "Nocturnal_PTT_dipping": 1.0262, "dPWV_reserve": -0.0051, "ATC95": 6948, "HR_RANGE": 36.2, "HR_rest": 65.1, "RR_irregularity": 0.1991}
+{"age": 67.7, "sex": 1, "MAP": 100.2, "dtau": 0.010443, "Nocturnal_PTT_dipping": 1.0199, "dPWV_reserve": -0.0074, "ATC95": 6363, "HR_RANGE": 34.2, "HR_rest": 67.8, "RR_irregularity": 0.2027}
+{"age": 67.8, "sex": 1, "MAP": 106.6, "dtau": 0.009496, "Nocturnal_PTT_dipping": 1.0121, "dPWV_reserve": -0.0184, "ATC95": 7086, "HR_RANGE": 33.5, "HR_rest": 68.2, "RR_irregularity": 0.2094}
+{"age": 67.8, "sex": 1, "MAP": 107.6, "dtau": 0.009437, "Nocturnal_PTT_dipping": 1.0074, "dPWV_reserve": -0.0162, "ATC95": 6329, "HR_RANGE": 31.5, "HR_rest": 68.9, "RR_irregularity": 0.2404}
+{"age": 67.9, "sex": 1, "MAP": 108.1, "dtau": 0.007716, "Nocturnal_PTT_dipping": 0.9956, "dPWV_reserve": -0.025, "ATC95": 5871, "HR_RANGE": 31.7, "HR_rest": 69.5, "RR_irregularity": 0.2492}

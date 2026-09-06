@@ -1,0 +1,89 @@
+{
+ "design": {
+  "landmark_days": 90,
+  "baseline": [
+   "age",
+   "age2",
+   "sex",
+   "MAP",
+   "log_n_days",
+   "log_days_total"
+  ],
+  "features": [
+   "ATC95",
+   "HR_RANGE",
+   "HR_rest"
+  ],
+  "label": "HF incident (landmark)",
+  "n_cohort": 64280,
+  "n_eligible": 61237,
+  "events": 1015,
+  "hfpef_events": 482,
+  "case_control_sample": 5015,
+  "prevalence": 0.016574946519261235
+ },
+ "results": {
+  "base_auroc": 0.799493965517251,
+  "full_auroc": 0.8115784482758712,
+  "delta": 0.0121,
+  "delta_ci": [
+   0.0067,
+   0.0182
+  ],
+  "hfpef_delta": 0.0091,
+  "hfpef_ci": [
+   0.0004,
+   0.0175
+  ],
+  "negcontrol_oa_delta": 0.0043,
+  "negcontrol_oa_ci": [
+   0.0004,
+   0.0091
+  ],
+  "hf_minus_oa": 0.0077,
+  "hf_minus_oa_ci": [
+   0.0001,
+   0.0153
+  ],
+  "within_age_auroc": 0.752,
+  "noise_null_sd_above": 4.8,
+  "prevalent_label_delta": 0.0054,
+  "reverse_causation_share": 0.96,
+  "calibration_slope_full": 0.8867225807654276,
+  "calibration_intercept_full": -0.5412847564400473,
+  "decile_or_base": 80.9,
+  "decile_or_full": 171.4,
+  "sens_top10": 0.2867,
+  "ppv_top10": 0.0839,
+  "dca_thresholds_won": 34,
+  "dca_n_thresholds": 40
+ },
+ "feature_distributions": {
+  "ATC95": {
+   "mean": 11344.579021259528,
+   "sd": 7039.111295794202,
+   "p5": 0.0,
+   "p95": 21521.25,
+   "median_case": 10824.0,
+   "median_control": 11281.0
+  },
+  "HR_RANGE": {
+   "mean": 41.8184165232358,
+   "sd": 9.408144299363839,
+   "p5": 28.0,
+   "p95": 57.0,
+   "median_case": 39.0,
+   "median_control": 42.0
+  },
+  "HR_rest": {
+   "mean": 60.48623063683305,
+   "sd": 8.489402991411252,
+   "p5": 47.0,
+   "p95": 75.0,
+   "median_case": 60.0,
+   "median_control": 60.0
+  }
+ },
+ "min_cell": 20,
+ "export_kind": "aggregate_tables_and_scalars_only"
+}
