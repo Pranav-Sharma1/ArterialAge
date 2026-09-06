@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "bt_soc_empty_silabs_debug:default_config",
+            "cwd": "${workspaceFolder}",
+            "type": "cortex-debug",
+            "request": "launch",
+            "serverpath": "/Users/pranavsharma/.silabs/slt/installs/archive/exx32-v6.0.32/JLinkGDBServerCLExe",
+            "servertype": "jlink",
+            "gdbPath": "/Users/pranavsharma/.silabs/slt/installs/archive/exx32-v6.0.32/arm-none-eabi-gdb",
+            "device": "EFR32MG26BxxxF3200",
+            "svdFile": "/var/folders/my/s365hc7j1vv6v4py_c1yqh_00000gn/T/silabs_extension/silabs_extension/svd/EFR32MG26B510F3200IM48.svd",
+            "runToEntryPoint": "main",
+            "rtos": "FreeRTOS",
+            "showDevDebugOutput": "raw",
+            "executable": "/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/base/bt_soc_empty.out",
+            "preLaunchTask": "bt_soc_empty_silabs_debug:default_config_combined",
+            "breakAfterReset": true,
+            "serialNumber": "440372151",
+            "overrideLaunchCommands": [
+                "exec-file /Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/base/bt_soc_empty.out",
+                "symbol-file /Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/base/bt_soc_empty.out"
+            ]
+        }
+    ]
+}

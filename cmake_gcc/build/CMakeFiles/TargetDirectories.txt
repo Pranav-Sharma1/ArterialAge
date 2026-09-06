@@ -1,0 +1,4 @@
+/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/CMakeFiles/slc.dir
+/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/CMakeFiles/bt_soc_empty.dir
+/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/CMakeFiles/edit_cache.dir
+/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/CMakeFiles/rebuild_cache.dir

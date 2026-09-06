@@ -1,0 +1,47 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "bt_soc_empty_silabs_debug:default_config_setup",
+            "type": "shell",
+            "command": "/Users/pranavsharma/.silabs/slt/installs/conan/p/cmake2992f7f10c358/p/CMake.app/Contents/bin/cmake --preset project",
+            "options": {
+                "cwd": "/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc"
+            }
+        },
+        {
+            "label": "bt_soc_empty_silabs_debug:default_config_build",
+            "type": "shell",
+            "command": "/Users/pranavsharma/.silabs/slt/installs/conan/p/cmake2992f7f10c358/p/CMake.app/Contents/bin/cmake --build --preset default_config",
+            "options": {
+                "cwd": "/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc"
+            }
+        },
+        {
+            "label": "bt_soc_empty_silabs_debug:default_config_flash",
+            "type": "shell",
+            "command": "/Users/pranavsharma/.silabs/slt/installs/archive/Commander.app/Contents/MacOS/commander",
+            "args": [
+                "flash",
+                "/Users/pranavsharma/SimplicityStudio/aa_final/bt_soc_empty/cmake_gcc/build/base/bt_soc_empty.hex",
+                "--halt",
+                "--serialno",
+                "440372151",
+                "--device",
+                "EFR32MG26B510F3200IM48"
+            ]
+        },
+        {
+            "label": "bt_soc_empty_silabs_debug:default_config_combined",
+            "dependsOrder": "sequence",
+            "presentation": {
+                "reveal": "never"
+            },
+            "dependsOn": [
+                "bt_soc_empty_silabs_debug:default_config_setup",
+                "bt_soc_empty_silabs_debug:default_config_build",
+                "bt_soc_empty_silabs_debug:default_config_flash"
+            ]
+        }
+    ]
+}
