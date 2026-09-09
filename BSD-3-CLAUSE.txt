@@ -1,5 +1,19 @@
 BSD 3-Clause License
 
+This license text is shared by the packages below. Each retains its own
+copyright notice, listed here; the license terms are identical for all.
+
+numpy:           Copyright (c) 2005-2024, NumPy Developers. All rights reserved.
+scipy:            Copyright (c) 2001-2002 Enthought, Inc. 2003-2024, SciPy Developers. All rights reserved.
+pandas:          Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc.
+                 and PyData Development Team. All rights reserved.
+                 Copyright (c) 2011-2026, Open source contributors.
+scikit-learn:    Copyright (c) 2007-2024 The scikit-learn developers. All rights reserved.
+joblib:          Copyright (c) 2008-2021, The joblib developers. All rights reserved.
+threadpoolctl:   Copyright (c) 2019, threadpoolctl contributors.
+python-dateutil: Copyright (c) 2003-2011 - Gustavo Niemeyer, and dateutil contributors.
+                 (dual-licensed Apache-2.0/BSD-3-Clause; BSD terms used here)
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -26,7 +40,3 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-Applies to: numpy, scipy, pandas, scikit-learn, joblib, threadpoolctl,
-python-dateutil. Each project retains its own copyright; see each
-project's repository for the exact copyright holder names.
